@@ -1,0 +1,21 @@
+This file tells Git which files to NOT upload to GitHub.
+
+1. The Virtual Environment (CRITICAL)
+
+This folder is huge and specific to your computer.
+
+Your friend will build their own.
+
+venv/
+
+2. The API Key File (CRITICAL)
+
+This prevents your .env file from ever being uploaded.
+
+.env
+
+3. Python Cache Files
+
+These are temporary files Python makes.
+
+pycache/
