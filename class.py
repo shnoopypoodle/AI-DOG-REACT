@@ -2,69 +2,103 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# Step 1: Load environment variables (your API key)
-# This command looks for the .env file in your folder
 load_dotenv()
 
-# Step 2: Initialize the OpenAI client
-# It will automatically read the OPENAI_API_KEY from your .env file
 try:
     client = OpenAI()
 except Exception as e:
     print(f"Error initializing OpenAI client: {e}")
-    print("Please make sure your OPENAI_API_KEY is set correctly in the .env file.")
     exit()
 
 def classify_sentence(sentence_to_classify):
     """
-    Classifies a Thai sentence using a simple "zero-shot" prompt.
-    This is the Day 2 prototype.
+    Classifies a Thai sentence using few-shot prompting for improved accuracy.
+    Returns one of three categories: love, sad, or impressed.
     """
-    print(f"--- Classifying sentence: '{sentence_to_classify}' ---")
-    
-    # This is our simple "zero-shot" prompt from Day 2 of the plan.
-    # It instructs the AI on what to do without giving it examples.
+    print(f"Input: '{sentence_to_classify}'")
+
+    # Enhanced system prompt with clear instructions and examples
     system_prompt = (
-        "You are an expert text classifier. "
-        "Classify the following Thai sentence into one of these three categories: love, sad, or impressed. "
-        "Respond with *only* the single category name in English."
+        "You are an expert emotion classifier for Thai language text. "
+        "Your task is to classify Thai sentences into exactly one of these three emotion categories:\n\n"
+        "1. 'love' - Expressions of romantic feelings, affection, caring, or warmth towards someone\n"
+        "2. 'sad' - Expressions of sadness, disappointment, loneliness, or melancholy\n"
+        "3. 'impressed' - Expressions of admiration, amazement, being impressed, or feeling proud\n\n"
+        "Instructions:\n"
+        "- Analyze the emotional tone and context of the Thai sentence carefully\n"
+        "- Consider Thai cultural expressions and idioms\n"
+        "- Respond with ONLY one word: either 'love', 'sad', or 'impressed'\n"
+        "- Do not include any explanation, punctuation, or additional text"
     )
-    
+
+    examples = [
+        {"role": "user", "content": "รักเธอมากที่สุดในโลก"},
+        {"role": "assistant", "content": "love"},
+        {"role": "user", "content": "เหงามากเลย ไม่มีใครเข้าใจ"},
+        {"role": "assistant", "content": "sad"},
+        {"role": "user", "content": "เก่งมากเลย ทำได้ดีจริงๆ"},
+        {"role": "assistant", "content": "impressed"}
+    ]
     try:
-        # Step 3: Make the API Call
-        # We send the system's instructions and the user's sentence
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(examples)
+        messages.append({"role": "user", "content": sentence_to_classify})
+
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Using a fast and capable model
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": sentence_to_classify}
-            ]
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=10
         )
-        
-        # Step 4: Extract the output from the response object
-        # The AI's reply is inside choices[0].message.content
-        category = response.choices[0].message.content
-        
-        # Clean up the output (remove extra spaces, make it lowercase)
-        return category.strip().lower()
+
+        category = response.choices[0].message.content.strip().lower()
+
+        #control response to be only in these 3 emotions
+        valid_categories = ['love', 'sad', 'impressed']
+        if category not in valid_categories:
+            print(f"Unexpected category '{category}', attempting to match")
+            for valid in valid_categories:
+                if valid in category:
+                    category = valid
+                    break
+            else:
+                print(f"Could not determine valid category from response: '{category}'")
+                return None
+
+        return category
 
     except Exception as e:
-        # Handle potential errors (e.g., API key is wrong, server is down)
         print(f"An error occurred while calling the OpenAI API: {e}")
         return None
 
-# This special block runs ONLY when you execute the script directly
-# (e.g., by running `python classify.py` in your terminal)
+#Section for testing python file in terminal
 if __name__ == "__main__":
+    print("Starting the system")
+    print("Categories: love, sad, impressed")
+    print("Type 'quit' or 'exit' to stop\n")
     
-    # --- This is our test sentence ---
-    # You can change this to anything you want!
-    test_sentence = "เค้าไปเที่ยวก่อนนะ"
-    
-    category = classify_sentence(test_sentence)
-    
-    if category:
-        print(f"\n✅ Final Category: {category}")
-    else:
-        print("\n❌ Classification failed.")
 
+    while True:
+        try:
+            user_input = input("Enter a sentence to classify emotion: ").strip() #input section will be change to receive text from speech to text model
+            if user_input.lower() in ['quit', 'exit']:
+                print("\nExiting system")
+                break
+
+            if not user_input:
+                print("Please enter a sentence.\n")
+                continue
+
+            category = classify_sentence(user_input)
+
+            if category:
+                print(f"\n Emotion: {category}\n")
+            else:
+                print("\n Classification failed. Please try again.\n")
+
+        except KeyboardInterrupt:
+            print("Keyboard Interrupted")
+            break
+        except EOFError:
+            print("Exiting --")
+            break
