@@ -13,17 +13,18 @@ except Exception as e:
 def classify_sentence(sentence_to_classify):
     """
     Classifies a Thai sentence using few-shot prompting for improved accuracy.
-    Returns one of three categories: love, sad, or impressed.
+    Returns one of three categories: บอกรัก(love), ไปเที่ยว(sad), or ผ้าขนหนู(impressed).
     """
     print(f"Input: '{sentence_to_classify}'")
 
     # Enhanced system prompt with clear instructions and examples
     system_prompt = (
-        "You are an expert emotion classifier for Thai language text. "
+        "You are an expert emotion classifier named garden(การ์เด้น) for Thai language text. "
         "Your task is to classify Thai sentences into exactly one of these three emotion categories:\n\n"
-        "1. 'love' - Expressions of romantic feelings, affection, caring, or warmth towards someone\n"
-        "2. 'sad' - Expressions of sadness, disappointment, loneliness, or melancholy\n"
-        "3. 'impressed' - Expressions of admiration, amazement, being impressed, or feeling proud\n\n"
+        #fine tunable
+        "1. 'บอกรัก' - Expressions of romantic feelings, affection, caring, or warmth towards someone\n"
+        "2. 'ไปเที่ยว' - Expressions of sadness, disappointment, loneliness, separation, or melancholy\n"
+        "3. 'ผ้าขนหนู' - Expressions of admiration, amazement, being impressed, appreciation, or feeling proud\n\n"
         "Instructions:\n"
         "- Analyze the emotional tone and context of the Thai sentence carefully\n"
         "- Consider Thai cultural expressions and idioms\n"
@@ -32,12 +33,19 @@ def classify_sentence(sentence_to_classify):
     )
 
     examples = [
+        #fine tunable
         {"role": "user", "content": "รักเธอมากที่สุดในโลก"},
-        {"role": "assistant", "content": "love"},
+        {"role": "assistant", "content": "บอกรัก"},
+        {"role": "user", "content": "การ์เด้นน่ารักจังเลย, รักการ์เด้นนะคะ"},
+        {"role": "assistant", "content": "บอกรัก"},
         {"role": "user", "content": "เหงามากเลย ไม่มีใครเข้าใจ"},
-        {"role": "assistant", "content": "sad"},
+        {"role": "assistant", "content": "ไปเที่ยว"},
+        {"role": "user", "content": "การ์เด้นไปเที่ยวกัน, ไปเที่ยวนะเดี๋ยวมา"},
+        {"role": "assistant", "content": "ไปเที่ยว"},
         {"role": "user", "content": "เก่งมากเลย ทำได้ดีจริงๆ"},
-        {"role": "assistant", "content": "impressed"}
+        {"role": "assistant", "content": "ผ้าขนหนู"},
+        {"role": "user", "content": "เก่งมากเลย ทำได้ดีจริงๆ"},
+        {"role": "assistant", "content": "ผ้าขนหนู"}
     ]
     try:
         messages = [{"role": "system", "content": system_prompt}]
@@ -45,7 +53,7 @@ def classify_sentence(sentence_to_classify):
         messages.append({"role": "user", "content": sentence_to_classify})
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=messages,
             temperature=0.3,
             max_tokens=10
@@ -54,7 +62,7 @@ def classify_sentence(sentence_to_classify):
         category = response.choices[0].message.content.strip().lower()
 
         #control response to be only in these 3 emotions
-        valid_categories = ['love', 'sad', 'impressed']
+        valid_categories = ['บอกรัก', 'ไปเที่ยว', 'ผ้าขนหนู']
         if category not in valid_categories:
             print(f"Unexpected category '{category}', attempting to match")
             for valid in valid_categories:
