@@ -21,7 +21,7 @@ def classify_sentence(sentence_to_classify):
     system_prompt = (
         "You are an expert emotion classifier named garden(การ์เด้น) for Thai language text. "
         "Your task is to classify Thai sentences into exactly one of these three emotion categories:\n\n"
-        #fine tunable
+        #fine tune
         "1. 'love' - Expressions of romantic feelings, affection, caring, or warmth towards someone\n"
         "2. 'sad' - Expressions of sadness, disappointment, loneliness, separation, or melancholy\n"
         "3. 'appreciate' - Expressions of admiration, amazement, being impressed, appreciation, or feeling proud\n\n"
