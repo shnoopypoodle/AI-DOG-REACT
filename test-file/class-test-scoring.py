@@ -2,13 +2,18 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 
-load_dotenv()
+def initialize_client():
+    load_dotenv()
+    
+    try:
+        client = OpenAI()
+        print("client initialized successfully.")
+        return client
+    except Exception as e:
+        print(f"Error initializing: {e}")
+        print("Exiting program.")
+        exit()
 
-try:
-    client = OpenAI()
-except Exception as e:
-    print(f"Error initializing OpenAI client: {e}")
-    exit()
 
 def classify_sentence(sentence_to_classify):
     """
@@ -17,7 +22,6 @@ def classify_sentence(sentence_to_classify):
     """
     print(f"Input: '{sentence_to_classify}'")
 
-    # --- CHANGED: System prompt now instructs to output a number ---
     system_prompt = (
         "You are an expert emotion classifier named garden(การ์เด้น) for Thai language text. "
         "Your task is to classify Thai sentences into exactly one of these three emotion categories:\n\n"
@@ -29,13 +33,12 @@ def classify_sentence(sentence_to_classify):
         "Instructions:\n"
         "- Analyze the emotional tone and context of the Thai sentence carefully.\n"
         "- Consider Thai cultural expressions and idioms.\n"
-        "- Respond with ONLY ONE NUMBER: '1', '2', or '3'.\n" # <-- CHANGED
+        "- Respond with ONLY ONE NUMBER: '1', '2', or '3'.\n"
         "- If a sentence is ambiguous or does not fit perfectly, you must still choose the single *closest* emotional category number.\n"
         "- Do not include any explanation, punctuation, or additional text. Just the single digit."
     )
 
     examples = [
-        # --- CHANGED: All examples now use numbers ---
         #1 = love
         {"role": "user", "content": "รักเธอมากที่สุดในโลก"},
         {"role": "assistant", "content": "1"},
@@ -60,6 +63,8 @@ def classify_sentence(sentence_to_classify):
         {"role": "user", "content": "ขอบคุณที่อยู่ข้างๆ กันนะ การ์เด้น"},
         {"role": "assistant", "content": "1"},
         {"role": "user", "content": "การ์เด้นเป็นเพื่อนที่ดีที่สุดเลย"},
+        {"role": "assistant", "content": "1"},
+        {"role": "user", "content": "แม่กลับมาแล้ว"},
         {"role": "assistant", "content": "1"},
 
         #2 = sad
@@ -128,16 +133,14 @@ def classify_sentence(sentence_to_classify):
             model="gpt-4o",
             messages=messages,
             temperature=0.2,
-            max_tokens=2 # Only need 1 token for the number, 2 just in case
+            max_tokens=2
         )
 
-        category = response.choices[0].message.content.strip() # No .lower() needed
+        category = response.choices[0].message.content.strip()
 
-        # --- CHANGED: Validation logic is now simpler and checks for numbers ---
         valid_categories = ['1', '2', '3']
         if category not in valid_categories:
             print(f"Unexpected response '{category}', attempting to extract number.")
-            # Fallback logic in case the AI outputs "1." or "The answer is 1"
             if '1' in category:
                 category = '1'
             elif '2' in category:
@@ -145,7 +148,6 @@ def classify_sentence(sentence_to_classify):
             elif '3' in category:
                 category = '3'
             else:
-                # Force a default if we truly can't find a number
                 print(f"Could not determine valid category. Defaulting to '1'.")
                 category = '1' 
 
@@ -153,20 +155,20 @@ def classify_sentence(sentence_to_classify):
 
     except Exception as e:
         print(f"An error occurred while calling the OpenAI API: {e}")
-        # --- CHANGED: Default to '1' on API error to ensure a number is always returned ---
         return '1'
 
-#Section for testing python file in terminal
+#Section for testing python file
 if __name__ == "__main__":
+    client = initialize_client()
+
     print("Starting the system")
-    # --- CHANGED: Updated print statement to match new output ---
     print("Categories: 1 (love), 2 (sad), 3 (appreciate)")
     print("Type 'quit' or 'exit' to stop\n")
     
 
     while True:
         try:
-            user_input = input("Enter a sentence to classify emotion: ").strip() 
+            user_input = input("Enter a sentence: ").strip() 
             if user_input.lower() in ['quit', 'exit']:
                 print("\nExiting system")
                 break
@@ -175,14 +177,11 @@ if __name__ == "__main__":
                 print("Please enter a sentence.\n")
                 continue
 
-            # --- CHANGED: This variable now holds '1', '2', or '3' ---
             category = classify_sentence(user_input)
 
             if category:
-                # --- CHANGED: Print the number directly ---
                 print(f"\n Emotion: {category}\n")
             else:
-                # This should no longer happen, but it's safe to keep
                 print("\n Classification failed. Please try again.\n")
 
         except KeyboardInterrupt:
