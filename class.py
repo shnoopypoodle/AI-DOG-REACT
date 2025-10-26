@@ -13,7 +13,7 @@ except Exception as e:
 def classify_sentence(sentence_to_classify):
     """
     Classifies a Thai sentence using few-shot prompting for improved accuracy.
-    Returns one of three categories: บอกรัก(love), ไปเที่ยว(sad), or ผ้าขนหนู(appreciate).
+    Returns one of three categories: 1-บอกรัก(love), 2-ไปเที่ยว(sad), or 3-ผ้าขนหนู(appreciate).
     """
     print(f"Input: '{sentence_to_classify}'")
 
@@ -40,8 +40,6 @@ def classify_sentence(sentence_to_classify):
         {"role": "assistant", "content": "love"},
         {"role": "user", "content": "เหงามากเลย ไม่มีใครเข้าใจ"},
         {"role": "assistant", "content": "sad"},
-#        {"role": "user", "content": "การ์เด้นไปเที่ยวกัน, ไปเที่ยวนะเดี๋ยวมา"},
-#        {"role": "assistant", "content": "sad"},
         {"role": "user", "content": "เก่งมากเลย ทำได้ดีจริงๆ"},
         {"role": "assistant", "content": "appreciate"},
 
